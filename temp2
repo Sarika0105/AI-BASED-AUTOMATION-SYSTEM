@@ -1,0 +1,312 @@
+import React, { useState } from 'react';
+import { 
+  Mail, 
+  MessageSquare, 
+  Bot, 
+  RefreshCw,
+  ThumbsUp,
+  ThumbsDown,
+  Info,
+  User,
+  ShieldAlert,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  Send
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '../lib/utils';
+
+interface ConversationalUIProps {
+  messages: any[];
+  fetchData: () => void;
+  isProcessing: boolean;
+  inputMessage: string;
+  setInputMessage: (v: string) => void;
+  inputChannel: 'Email' | 'Chat';
+  setInputChannel: (v: 'Email' | 'Chat') => void;
+  simulateWorkflow: (e: React.FormEvent) => void;
+}
+
+export default function ConversationalUI({ 
+  messages, 
+  fetchData, 
+  isProcessing, 
+  inputMessage, 
+  setInputMessage, 
+  inputChannel, 
+  setInputChannel, 
+  simulateWorkflow 
+}: ConversationalUIProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Record<string, 'up' | 'down'>>({});
+  const [overridden, setOverridden] = useState<Record<string, boolean>>({});
+
+  const handleFeedback = (id: string, type: 'up' | 'down') => {
+    setFeedback(prev => ({ ...prev, [id]: type }));
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId: id, type: type === 'up' ? 'positive' : 'negative' })
+    });
+  };
+
+  const handleOverride = (id: string) => {
+    // Using a custom modal would be better, but for now I'll keep it simple or just remove the confirm if it's annoying in iframe
+    // But the instructions say avoid window.confirm. I'll just perform the action for now or assume a UI-based confirmation.
+    setOverridden(prev => ({ ...prev, [id]: true }));
+  };
+
+  const smartPrompts = [
+    "Check order status for #12345",
+    "Request a refund for damaged item",
+    "Book a consultation for next week",
+    "Inquire about enterprise pricing"
+  ];
+
+  return (
+    <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-7xl mx-auto pb-8">
+      {/* Left Column: Chat Interface */}
+      <div className="col-span-12 lg:col-span-8 space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Conversations</h2>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Real-time AI communication management.</p>
+          </div>
+          <button 
+            onClick={fetchData} 
+            className="p-2.5 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 transition-all shadow-sm group active:scale-95"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500 group-hover:rotate-180 transition-transform duration-700" />
+          </button>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden flex flex-col h-[600px] relative shadow-sm">
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 custom-scrollbar relative">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <div className="bg-white p-6 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                  <MessageSquare className="w-8 h-8 text-slate-200" />
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">No active conversations</p>
+                <p className="text-[9px] mt-1.5 opacity-40 font-bold uppercase tracking-widest">Initialize a connection to begin.</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className="space-y-6">
+                  {/* Incoming Message */}
+                  <div className="flex gap-4 max-w-[85%] group/msg">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-slate-200 shadow-sm group-hover/msg:scale-105 transition-all duration-300">
+                      <User className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm">
+                        <p className="text-sm text-slate-700 leading-relaxed font-medium">"{msg.content}"</p>
+                      </div>
+                      <div className="flex items-center gap-3 ml-1">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <div className="w-1 h-1 rounded-full bg-slate-200" />
+                        <span className="text-[9px] font-bold text-brand-primary uppercase tracking-widest">{msg.channel}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Reply */}
+                  {msg.status === 'Responded' && (
+                    <div className="flex gap-4 max-w-[85%] ml-auto flex-row-reverse group/ai">
+                      <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center shrink-0 shadow-lg shadow-indigo-100 group-hover/ai:scale-105 transition-all duration-300">
+                        <Bot className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="space-y-2 flex flex-col items-end">
+                        <div className="bg-brand-primary p-5 rounded-2xl rounded-tr-none text-white shadow-xl shadow-indigo-50 relative overflow-hidden">
+                          <p className="text-sm leading-relaxed relative z-10 font-medium">{msg.response}</p>
+                          <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-6 relative z-10">
+                            <div className="flex items-center gap-2">
+                              <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">AI Confidence: {msg.analysis.confidence}%</span>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button 
+                                onClick={() => handleFeedback(msg.id, 'up')}
+                                className={cn("p-1.5 rounded-lg transition-all border border-white/10", feedback[msg.id] === 'up' ? "bg-white/20 border-white/30" : "hover:bg-white/10")}
+                              >
+                                <ThumbsUp className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={() => handleFeedback(msg.id, 'down')}
+                                className={cn("p-1.5 rounded-lg transition-all border border-white/10", feedback[msg.id] === 'down' ? "bg-white/20 border-white/30" : "hover:bg-white/10")}
+                              >
+                                <ThumbsDown className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mr-1">AI Automation</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual Override / Escalation */}
+                  {(msg.status === 'Sent to Human Agent' || msg.status === 'Escalated') && (
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <div className={cn(
+                        "px-6 py-4 rounded-3xl border text-center max-w-sm transition-all shadow-sm",
+                        overridden[msg.id] ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100"
+                      )}>
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm",
+                          overridden[msg.id] ? "bg-white text-emerald-500" : "bg-white text-amber-500"
+                        )}>
+                          {overridden[msg.id] ? <CheckCircle2 className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                        </div>
+                        <h4 className={cn("font-bold text-xs uppercase tracking-widest", overridden[msg.id] ? "text-emerald-700" : "text-amber-700")}>
+                          {overridden[msg.id] ? "Agent Assigned" : "Escalation Required"}
+                        </h4>
+                        <p className="text-[10px] mt-2 leading-relaxed font-bold uppercase tracking-widest text-slate-400">
+                          {overridden[msg.id] ? "A specialist is now handling this inquiry." : "This message requires human intervention."}
+                        </p>
+                        {!overridden[msg.id] && (
+                          <button 
+                            onClick={() => handleOverride(msg.id)}
+                            className="mt-4 w-full bg-white hover:bg-slate-50 text-amber-700 font-bold py-2.5 rounded-xl text-[9px] uppercase tracking-widest transition-all border border-amber-200 shadow-sm active:scale-95"
+                          >
+                            Assign to Agent
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Input Area */}
+          <div className="p-6 border-t border-slate-100 bg-white relative z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+            <form onSubmit={simulateWorkflow} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1 p-1 bg-slate-50 rounded-xl w-fit border border-slate-100">
+                  <button 
+                    type="button"
+                    onClick={() => setInputChannel('Chat')}
+                    className={cn("px-4 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest", inputChannel === 'Chat' ? "bg-white text-brand-primary shadow-sm border border-slate-100" : "text-slate-400 hover:text-slate-600")}
+                  >Chat</button>
+                  <button 
+                    type="button"
+                    onClick={() => setInputChannel('Email')}
+                    className={cn("px-4 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest", inputChannel === 'Email' ? "bg-white text-brand-primary shadow-sm border border-slate-100" : "text-slate-400 hover:text-slate-600")}
+                  >Email</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AI Processing Active</span>
+                </div>
+              </div>
+              
+              <div className="relative group">
+                <textarea 
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Type a message to simulate automation..."
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-brand-primary/30 focus:bg-white outline-none transition-all text-sm min-h-[100px] font-medium placeholder:text-slate-300 shadow-inner resize-none"
+                />
+                <button 
+                  disabled={isProcessing || !inputMessage.trim()}
+                  className="absolute right-4 bottom-4 bg-brand-primary hover:bg-brand-secondary disabled:bg-slate-100 text-white p-3 rounded-xl transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                >
+                  {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {smartPrompts.map(prompt => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setInputMessage(prompt)}
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[9px] font-bold text-slate-500 rounded-lg border border-slate-200 transition-all active:scale-95 uppercase tracking-widest"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: AI Analysis */}
+      <div className="col-span-12 lg:col-span-4 space-y-6">
+        <section className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <Bot className="w-4 h-4 text-brand-primary" /> AI Analysis
+          </h3>
+          {messages.length > 0 ? (
+            <div className="space-y-6">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Detected Intent</p>
+                <div className="flex items-center gap-3">
+                  <div className="px-3 py-1.5 bg-brand-primary text-white rounded-lg text-[9px] font-bold uppercase tracking-widest shadow-sm">
+                    {messages[0].analysis.intent}
+                  </div>
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Confidence: {messages[0].analysis.confidence}%</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sentiment</p>
+                  <p className={cn(
+                    "text-xs font-bold uppercase tracking-widest",
+                    messages[0].analysis.sentiment.toLowerCase().includes('positive') ? "text-emerald-600" : 
+                    messages[0].analysis.sentiment.toLowerCase().includes('negative') ? "text-red-600" : "text-slate-600"
+                  )}>{messages[0].analysis.sentiment}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tone</p>
+                  <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">{messages[0].analysis.tone}</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-brand-primary/5 rounded-xl border border-brand-primary/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldAlert className="w-3.5 h-3.5 text-brand-primary" />
+                  <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest">System Status</p>
+                </div>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+                  Automation pipeline is currently monitoring this conversation for potential escalations.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-300 italic text-sm border-2 border-dashed border-slate-100 rounded-3xl">
+              <p className="font-bold uppercase tracking-widest text-[9px]">No active analysis.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="bg-brand-primary p-8 rounded-3xl text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-700">
+            <Zap className="w-32 h-32 text-white" />
+          </div>
+          <h3 className="text-lg font-bold mb-3 tracking-tight relative z-10">AI Learning</h3>
+          <p className="text-[10px] text-white/80 leading-relaxed relative z-10 font-medium">
+            Your feedback directly trains our automation models, improving accuracy and reducing human intervention over time.
+          </p>
+          <div className="mt-6 flex items-center gap-3 relative z-10">
+            <div className="flex -space-x-2.5">
+              {[1,2,3].map(i => (
+                <div key={i} className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[9px] font-bold backdrop-blur-sm shadow-sm">
+                  {i}
+                </div>
+              ))}
+            </div>
+            <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Active Models</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
