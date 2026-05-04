@@ -1,0 +1,194 @@
+import React from 'react';
+import { 
+  Bot, 
+  Target, 
+  Activity, 
+  MessageSquare, 
+  Zap, 
+  ShieldAlert, 
+  Info,
+  ChevronRight,
+  TrendingUp,
+  AlertCircle
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+
+interface AIAnalysisProps {
+  messages: any[];
+}
+
+export default function AIAnalysis({ messages }: AIAnalysisProps) {
+  const lastMsg = messages[0];
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">AI Insights & Analysis</h2>
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Deep insights into communication intent and sentiment.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center gap-2.5">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">AI Engine Active</span>
+          </div>
+        </div>
+      </div>
+
+      {!lastMsg ? (
+        <div className="bg-white p-24 rounded-3xl text-center relative overflow-hidden group border border-slate-200 shadow-sm">
+          <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-slate-100 group-hover:scale-110 transition-transform duration-500">
+            <Bot className="w-8 h-8 text-slate-300" />
+          </div>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Awaiting Data Stream</p>
+          <p className="text-slate-500 text-base mt-2 max-w-md mx-auto leading-relaxed font-bold tracking-tight opacity-60">Connect a communication stream to begin real-time AI analysis...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-12 gap-6">
+          {/* Main Analysis Card */}
+          <section className="col-span-12 lg:col-span-8 space-y-6">
+            <div className="bg-white p-8 rounded-3xl relative overflow-hidden group border border-slate-200 shadow-sm">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000">
+                <Zap className="w-64 h-64 text-brand-primary" />
+              </div>
+              
+              <div className="relative z-10 space-y-8">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2.5">
+                    <Activity className="w-4 h-4 text-brand-primary" /> Analysis Results
+                  </h3>
+                  <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                    <Zap className="w-3 h-3 text-brand-primary" />
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Engine: GPT-4o</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 group/item hover:bg-white transition-all duration-500 shadow-inner hover:shadow-lg hover:-translate-y-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shadow-sm group-hover/item:scale-110 transition-transform">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Detected Intent</p>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 tracking-tight uppercase">{lastMsg.analysis.intent}</p>
+                    <div className="mt-6 flex items-center gap-4">
+                      <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden shadow-inner border border-slate-100">
+                        <div className="h-full bg-brand-primary rounded-full shadow-sm transition-all duration-1000" style={{ width: `${lastMsg.analysis.confidence}%` }} />
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500">{lastMsg.analysis.confidence}%</span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 group/item hover:bg-white transition-all duration-500 shadow-inner hover:shadow-lg hover:-translate-y-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-brand-secondary/10 flex items-center justify-center text-brand-secondary shadow-sm group-hover/item:scale-110 transition-transform">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sentiment Analysis</p>
+                    </div>
+                    <p className={cn(
+                      "text-2xl font-bold tracking-tight uppercase",
+                      lastMsg.analysis.sentiment.toLowerCase().includes('positive') ? "text-emerald-600" : 
+                      lastMsg.analysis.sentiment.toLowerCase().includes('negative') ? "text-red-600" : "text-slate-600"
+                    )}>{lastMsg.analysis.sentiment}</p>
+                    <p className="mt-4 text-[9px] text-slate-400 font-bold uppercase tracking-widest opacity-60">Real-time sentiment monitoring active.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 shadow-inner group/sub hover:bg-white transition-all">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tone</p>
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-widest opacity-80">{lastMsg.analysis.tone}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 shadow-inner group/sub hover:bg-white transition-all">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Urgency</p>
+                    <p className={cn(
+                      "text-xs font-bold uppercase tracking-widest",
+                      lastMsg.analysis.shouldEscalate ? "text-amber-600" : "text-slate-600"
+                    )}>{lastMsg.analysis.shouldEscalate ? "High Priority" : "Standard"}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 shadow-inner group/sub hover:bg-white transition-all">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Language</p>
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-widest opacity-80">English (US)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl relative overflow-hidden group/logic border border-slate-200 shadow-sm">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover/logic:scale-110 transition-transform duration-1000">
+                <ShieldAlert className="w-64 h-64 text-brand-primary" />
+              </div>
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-brand-primary" /> AI Reasoning Engine
+              </h3>
+              <div className="space-y-6 relative z-10">
+                <p className="text-lg text-slate-700 leading-relaxed font-bold tracking-tight">
+                  "{lastMsg.analysis.reasoning || "The AI engine has identified a high-confidence match for this inquiry. Intent is clearly defined and sentiment remains within professional parameters."}"
+                </p>
+                <div className="pt-6 border-t border-slate-100 flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-300" />
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Model: GPT-4o</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-brand-primary" />
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Confidence: {lastMsg.analysis.confidence}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Status: {lastMsg.status}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Side Panel: Analysis Trends */}
+          <section className="col-span-12 lg:col-span-4 space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+                <TrendingUp className="w-4 h-4 text-slate-400" /> Analysis Trends
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { label: "Top Intent", value: "Inquiry", sub: "42% of total", color: "text-brand-primary", icon: MessageSquare, bg: "bg-indigo-50" },
+                  { label: "Avg Confidence", value: "94.2%", sub: "↑ 2.1% week", color: "text-emerald-600", icon: Zap, bg: "bg-emerald-50" },
+                  { label: "Accuracy Risk", value: "Low", sub: "0.8% detected", color: "text-emerald-600", icon: ShieldAlert, bg: "bg-emerald-50" }
+                ].map((stat, i) => (
+                  <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 group/stat hover:bg-white transition-all duration-500 shadow-inner hover:shadow-lg hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                      <div className={cn("p-2 rounded-lg transition-all duration-500 group-hover/stat:scale-110", stat.bg)}>
+                        <stat.icon className={cn("w-3.5 h-3.5", stat.color)} />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+                    <p className={cn("text-[9px] font-bold mt-2 uppercase tracking-widest", stat.color)}>{stat.sub}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-brand-primary p-8 rounded-3xl text-white shadow-xl shadow-indigo-100 relative overflow-hidden group active:scale-[0.98] transition-transform cursor-pointer">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-1000">
+                <Bot className="w-48 h-48 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-3 tracking-tight relative z-10 uppercase tracking-widest">AI Learning</h3>
+              <p className="text-[10px] text-white/70 leading-relaxed relative z-10 font-bold uppercase tracking-widest opacity-80">
+                The AI engine constantly learns from feedback, refining business context and sector calibration in real-time.
+              </p>
+              <div className="mt-8 flex items-center gap-3 relative z-10">
+                <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-xl text-[9px] font-bold uppercase tracking-widest border border-white/10">
+                  Active Training
+                </div>
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}
