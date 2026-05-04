@@ -1,0 +1,400 @@
+import React, { useState } from 'react';
+import { 
+  BarChart3, 
+  PieChart as PieChartIcon, 
+  TrendingUp, 
+  Filter, 
+  Calendar, 
+  Mail, 
+  MessageSquare, 
+  Zap, 
+  CheckCircle2, 
+  AlertCircle,
+  Activity,
+  Clock,
+  Target,
+  Layers,
+  Cpu
+} from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  AreaChart,
+  Area,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Legend
+} from 'recharts';
+import { cn } from '../lib/utils';
+
+interface AnalyticsDetailedProps {
+  stats: any;
+  messages: any[];
+}
+
+export default function AnalyticsDetailed({ stats, messages }: AnalyticsDetailedProps) {
+  const [dateRange, setDateRange] = useState('7d');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [sentimentFilter, setSentimentFilter] = useState('all');
+
+  const sentimentData = [
+    { name: 'Positive', value: stats.sentiment.positive, color: '#10B981' },
+    { name: 'Neutral', value: stats.sentiment.neutral, color: '#6366F1' },
+    { name: 'Negative', value: stats.sentiment.negative, color: '#F43F5E' },
+  ].filter(d => d.value > 0);
+
+  const intentData = [
+    { name: 'Inquiry', value: 45, color: '#6366F1' },
+    { name: 'Booking', value: 28, color: '#8B5CF6' },
+    { name: 'Complaint', value: 12, color: '#F59E0B' },
+    { name: 'Refund', value: 15, color: '#EC4899' },
+    { name: 'Technical', value: 22, color: '#06B6D4' },
+  ];
+
+  const volumeData = messages.slice().reverse().map((m, i) => ({ 
+    name: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+    automated: Math.floor(Math.random() * 15 + 10),
+    manual: Math.floor(Math.random() * 8 + 2),
+    total: 0 // calculated below
+  })).map(d => ({ ...d, total: d.automated + d.manual }));
+
+  const performanceData = [
+    { subject: 'Accuracy', A: 95, fullMark: 100 },
+    { subject: 'Speed', A: 88, fullMark: 100 },
+    { subject: 'Sentiment', A: 92, fullMark: 100 },
+    { subject: 'Automation', A: 75, fullMark: 100 },
+    { subject: 'Satisfaction', A: 82, fullMark: 100 },
+    { subject: 'Uptime', A: 99, fullMark: 100 },
+  ];
+
+  const resolutionData = [
+    { name: 'Automated', value: stats.automated, color: '#6366F1' },
+    { name: 'Human Agent', value: stats.escalated, color: '#F59E0B' },
+    { name: 'Pending', value: 5, color: '#94A3B8' },
+  ];
+
+  const chartColors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#06B6D4'];
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-7xl mx-auto pb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Analytics Dashboard</h2>
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Performance metrics and communication trends.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 p-1 bg-white rounded-xl border border-slate-200 shadow-sm">
+            {['7d', '30d', '90d'].map(r => (
+              <button 
+                key={r}
+                onClick={() => setDateRange(r)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest", 
+                  dateRange === r ? "bg-brand-primary text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:text-slate-600"
+                )}
+              >{r}</button>
+            ))}
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-xl text-[9px] font-bold hover:bg-brand-primary/90 transition-all uppercase tracking-widest shadow-lg shadow-indigo-100 active:scale-95">
+            <TrendingUp className="w-3.5 h-3.5" /> Export Data
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[9px] font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest shadow-sm active:scale-95">
+            <Filter className="w-3.5 h-3.5" /> Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="bg-white p-6 rounded-3xl flex flex-wrap items-center gap-8 border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Stream Type</span>
+          <select 
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-brand-primary/20 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
+          >
+            <option value="all">All Streams</option>
+            <option value="booking">Booking</option>
+            <option value="inquiry">Inquiry</option>
+            <option value="complaint">Complaint</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sentiment</span>
+          <select 
+            value={sentimentFilter}
+            onChange={e => setSentimentFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-[10px] font-bold text-slate-700 outline-none focus:border-brand-primary/20 transition-all uppercase tracking-widest shadow-inner cursor-pointer"
+          >
+            <option value="all">All Sentiments</option>
+            <option value="positive">Positive</option>
+            <option value="neutral">Neutral</option>
+            <option value="negative">Negative</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-6">
+        {/* Sentiment Distribution */}
+        <section className="col-span-12 lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <PieChartIcon className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> Sentiment
+          </h3>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={sentimentData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={85}
+                  paddingAngle={8}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {sentimentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    padding: '12px',
+                    color: '#1E293B',
+                  }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            {sentimentData.map(d => (
+              <div key={d.name} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner group/stat hover:bg-white transition-all">
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">{d.name}</p>
+                <p className="text-xl font-bold text-slate-900 tracking-tight">{d.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Performance Radar */}
+        <section className="col-span-12 lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <Target className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> System Profile
+          </h3>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={performanceData}>
+                <PolarGrid stroke="#F1F5F9" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 8, fontWeight: 700, fill: '#94A3B8' }} />
+                <Radar
+                  name="AI Performance"
+                  dataKey="A"
+                  stroke="#6366F1"
+                  fill="#6366F1"
+                  fillOpacity={0.6}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', 
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    padding: '12px',
+                    color: '#1E293B',
+                  }} 
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <div className="px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+              <p className="text-[9px] font-bold text-brand-primary uppercase tracking-widest">Overall Score: 89.5%</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Efficiency Pie */}
+        <section className="col-span-12 lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <Activity className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> Resolution
+          </h3>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={resolutionData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={0}
+                  outerRadius={85}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {resolutionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    padding: '12px',
+                    color: '#1E293B',
+                  }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-6">
+            {resolutionData.map(d => (
+              <div key={d.name} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100 group hover:bg-white transition-all shadow-inner">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{d.name}</span>
+                </div>
+                <span className="text-sm font-bold text-slate-900">{d.value}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Volume Over Time - Area Chart */}
+        <section className="col-span-12 lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <Layers className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> Volume Trends
+          </h3>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={volumeData}>
+                <defs>
+                  <linearGradient id="colorAutomated" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorManual" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94A3B8', textTransform: 'uppercase' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94A3B8' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    padding: '12px',
+                    color: '#1E293B',
+                    textTransform: 'uppercase',
+                  }} 
+                />
+                <Area type="monotone" dataKey="automated" stroke="#6366F1" fillOpacity={1} fill="url(#colorAutomated)" strokeWidth={3} />
+                <Area type="monotone" dataKey="manual" stroke="#F59E0B" fillOpacity={1} fill="url(#colorManual)" strokeWidth={3} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', paddingTop: 20 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* Category Breakdown - Colorful Bar Chart */}
+        <section className="col-span-12 lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm group">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <Cpu className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> Processing Load
+          </h3>
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={intentData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 800, fill: '#94A3B8', textTransform: 'uppercase' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94A3B8' }} />
+                <Tooltip 
+                  cursor={{ fill: '#F8FAFC' }} 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    padding: '12px',
+                    color: '#1E293B',
+                    textTransform: 'uppercase',
+                  }} 
+                />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={24}>
+                  {intentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* Avg Response Time Trend */}
+        <section className="col-span-12 bg-white p-6 rounded-3xl relative overflow-hidden border border-slate-200 shadow-sm group">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000">
+            <Clock className="w-64 h-64 text-slate-400" />
+          </div>
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <Clock className="w-4 h-4 text-brand-primary group-hover:scale-110 transition-transform" /> Latency Profile (s)
+          </h3>
+          <div className="h-[220px] relative z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={volumeData.map(d => ({ ...d, val: Math.random() * 2 + 0.5 }))}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94A3B8', textTransform: 'uppercase' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94A3B8' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px', 
+                    border: '1px solid #E2E8F0', 
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    color: '#1E293B',
+                    padding: '12px',
+                    textTransform: 'uppercase',
+                  }} 
+                />
+                <Line type="stepAfter" dataKey="val" stroke="#8B5CF6" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
