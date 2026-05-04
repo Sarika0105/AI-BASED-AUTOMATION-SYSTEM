@@ -1,0 +1,329 @@
+import React from 'react';
+import { 
+  Activity, 
+  CheckCircle2, 
+  AlertCircle, 
+  Clock, 
+  Mail, 
+  BarChart3, 
+  Zap, 
+  Bot, 
+  Send,
+  ChevronRight,
+  User,
+  MessageSquare,
+  TrendingUp,
+  Shield,
+  Search,
+  Filter
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  AreaChart,
+  Area
+} from 'recharts';
+
+interface DashboardOverviewProps {
+  stats: any;
+  emails: any[];
+  backendError: string | null;
+  isProcessing: boolean;
+  currentStep: number;
+  setActiveTab: (tab: string) => void;
+}
+
+const StatCard = ({ title, value, icon: Icon, color, trend }: { title: string, value: number | string, icon: any, color: string, trend?: string }) => (
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden">
+    <div className="flex items-center justify-between mb-4 relative z-10">
+      <div className={cn("p-2.5 rounded-xl transition-transform group-hover:scale-110 shadow-sm", color)}>
+        <Icon className="w-4 h-4 text-white" />
+      </div>
+      {trend && (
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-bold border border-emerald-100">
+          <TrendingUp className="w-2.5 h-2.5" />
+          {trend}
+        </div>
+      )}
+    </div>
+    <div className="relative z-10">
+      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{title}</p>
+      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+    </div>
+    <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-slate-50 rounded-full group-hover:scale-125 transition-transform duration-500" />
+  </div>
+);
+
+const MessageCard: React.FC<{ msg: any }> = ({ msg }) => {
+  const sentimentColor = 
+    msg.sentiment === 'positive' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+    msg.sentiment === 'negative' ? 'bg-red-50 text-red-600 border-red-100' :
+    'bg-slate-50 text-slate-500 border-slate-100';
+
+  const priorityColor = 
+    msg.priority === 'high' ? 'bg-red-50 text-red-600 border-red-100' :
+    msg.priority === 'medium' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+    'bg-emerald-50 text-emerald-600 border-emerald-100';
+
+  return (
+    <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-all duration-300 border-b border-slate-100 last:border-0 group">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 transition-all duration-300 group-hover:scale-105 shadow-sm bg-indigo-50 text-indigo-600 border-indigo-100"
+        )}>
+          <Mail className="w-4 h-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-slate-700 truncate mb-1 group-hover:text-brand-primary transition-colors">
+            "{msg.message}"
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[8px] font-bold uppercase tracking-widest border border-slate-200">
+              {msg.intent}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <span className={cn("px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-widest border", sentimentColor)}>
+              {msg.sentiment}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <span className={cn("px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-widest border", priorityColor)}>
+              {msg.priority}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-slate-200" />
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+              Escalation: {msg.escalation}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </div>
+    </div>
+  );
+};
+
+export default function DashboardOverview({ stats, emails, backendError, isProcessing, currentStep, setActiveTab }: DashboardOverviewProps) {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [filterStatus, setFilterStatus] = React.useState('all');
+  
+  const responseRate = stats.total > 0 ? ((stats.automated / stats.total) * 100).toFixed(1) : '0';
+
+  const filteredEmails = emails.filter(msg => {
+    const matchesSearch = msg.message.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || 
+      (filterStatus === 'responded' && msg.escalation === 'No') ||
+      (filterStatus === 'escalated' && msg.escalation === 'Yes');
+    return matchesSearch && matchesFilter;
+  });
+  
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 max-w-7xl mx-auto pb-12">
+      {backendError && (
+        <div className="p-4 bg-red-50 border border-red-100 text-red-600 text-xs font-bold uppercase tracking-widest rounded-xl text-center animate-pulse">
+          {backendError}
+        </div>
+      )}
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard 
+          title="Total Messages" 
+          value={stats.total} 
+          icon={MessageSquare} 
+          color="bg-brand-primary" 
+          trend="+12.5%"
+        />
+        <StatCard 
+          title="Response Rate" 
+          value={`${responseRate}%`} 
+          icon={CheckCircle2} 
+          color="bg-indigo-600" 
+          trend="+5.2%"
+        />
+        <StatCard 
+          title="Escalation Count" 
+          value={stats.failed} 
+          icon={AlertCircle} 
+          color="bg-amber-500" 
+          trend="-2.4%"
+        />
+      </div>
+
+      <div className="grid grid-cols-12 gap-6">
+        {/* Main Area: Recent Activity */}
+        <div className="col-span-12 lg:col-span-8 space-y-6">
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+              <div className="flex items-center gap-4">
+                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Activity</h3>
+                <div className="h-4 w-px bg-slate-200" />
+                <div className="flex gap-2">
+                  {['all', 'responded', 'escalated'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilterStatus(f)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[8px] font-bold uppercase tracking-widest transition-all border",
+                        filterStatus === f ? "bg-brand-primary text-white border-brand-primary" : "bg-white text-slate-400 border-slate-200 hover:border-slate-300"
+                      )}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                  <input 
+                    type="text"
+                    placeholder="Search activity..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 pr-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-medium outline-none focus:border-brand-primary/30 w-48"
+                  />
+                </div>
+                <button 
+                  onClick={() => setActiveTab('logs')}
+                  className="text-[9px] font-bold text-brand-primary hover:text-brand-secondary transition-colors uppercase tracking-widest"
+                >
+                  View All
+                </button>
+              </div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {filteredEmails.length > 0 ? (
+                filteredEmails.slice(0, 6).map((msg, idx) => (
+                  <MessageCard key={msg.id || idx} msg={msg} />
+                ))
+              ) : (
+                <div className="p-12 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">No emails yet</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Automation Pipeline Status */}
+          <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-brand-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Automation Pipeline</h3>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Real-time processing status.</p>
+                </div>
+              </div>
+              {isProcessing && (
+                <div className="flex items-center gap-2 px-2.5 py-1 bg-indigo-50 text-[9px] font-bold text-brand-primary rounded-full border border-indigo-100 animate-pulse">
+                  <span className="w-1 h-1 bg-brand-primary rounded-full" />
+                  AI Processing Active
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between relative px-4">
+              <div className="absolute top-1/2 left-10 right-10 h-px bg-slate-100 -z-0 -translate-y-1/2" />
+              {[
+                { icon: Mail, label: 'Ingestion' },
+                { icon: Bot, label: 'AI Analysis' },
+                { icon: Zap, label: 'Automation' },
+                { icon: Send, label: 'Response' }
+              ].map((step, idx) => {
+                const isActive = currentStep === idx;
+                const isCompleted = currentStep > idx;
+                return (
+                  <div key={step.label} className="flex flex-col items-center gap-3 relative z-10">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all duration-500 shadow-sm",
+                      isActive ? "border-brand-primary bg-brand-primary text-white shadow-lg shadow-indigo-100 scale-110" :
+                      isCompleted ? "border-emerald-500 bg-emerald-500 text-white" :
+                      "border-slate-100 bg-white text-slate-300"
+                    )}>
+                      <step.icon className="w-5 h-5" />
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest",
+                      isActive ? "text-brand-primary" : "text-slate-400"
+                    )}>{step.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        {/* Right Panel: System Status */}
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+          <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">System Status</h3>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[11px] font-bold text-slate-700">AI Engine Active</span>
+                </div>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[11px] font-bold text-slate-700">Real-time Automation</span>
+                </div>
+                <Zap className="w-3.5 h-3.5 text-brand-primary" />
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <Shield className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] font-bold text-slate-700">Data Secure (AES-256)</span>
+                </div>
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Verified</span>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active Nodes</span>
+                <span className="text-xs font-bold text-slate-900">1,284</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">System Health</span>
+                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Online</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Quick Stats / Sentiment */}
+          <section className="bg-brand-primary p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <Activity className="w-24 h-24 text-white" />
+            </div>
+            <h3 className="text-base font-bold mb-2 tracking-tight relative z-10">Escalation Manager</h3>
+            <p className="text-[10px] text-white/80 leading-relaxed mb-6 relative z-10 font-medium">
+              Our AI automatically identifies complex inquiries and routes them to the appropriate human agent for resolution.
+            </p>
+            <button 
+              onClick={() => setActiveTab('analysis')}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all relative z-10 active:scale-95"
+            >
+              View AI Analysis
+            </button>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
