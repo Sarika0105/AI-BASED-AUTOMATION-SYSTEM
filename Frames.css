@@ -1,0 +1,64 @@
+index : @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-bg: #F8FAFC;
+  --color-brand-card: #FFFFFF;
+  --color-brand-primary: #6366F1;
+  --color-brand-secondary: #1E3A8A;
+  --color-brand-accent: #10B981;
+  --color-brand-warning: #F59E0B;
+  --color-brand-danger: #EF4444;
+  --color-brand-text: #0F172A;
+  --color-brand-text-muted: #64748B;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-primary selection:text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-slate-200/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.04)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.08)] transition-all duration-500;
+  }
+  
+  .premium-shadow {
+    @apply shadow-[0_20px_50px_-12px_rgba(99,102,241,0.08)];
+  }
+
+  .status-badge {
+    @apply px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest;
+  }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
